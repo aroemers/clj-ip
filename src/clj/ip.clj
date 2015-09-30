@@ -1,7 +1,23 @@
 (ns clj.ip
-  (:refer-clojure :exclude [compile])
+  (:refer-clojure :exclude (compile))
+  (:require [clojure.string :refer (split trim)])
   (:import [java.math BigInteger]
            [java.net InetAddress]))
+
+
+(defprotocol IP
+  (to-bytes [this]
+    "Returns the given IP instance as a BigInteger representation of
+    the bytes."))
+
+(extend-protocol IP
+  String
+  (to-bytes [this]
+    (BigInteger. (.getAddress (InetAddress/getByName this))))
+
+  InetAddress
+  (to-bytes [this]
+    (BigInteger. (.getAddress this))))
 
 
 (defprotocol Range
@@ -16,14 +32,11 @@
     form of a String (ipv4 or ipv6) or InetAddress, this function
     checks whether the given IP falls within the range."))
 
-(deftype CompiledRange [^String original ^BigInteger prefix-num ^int bits ^boolean ipv6?]
+(deftype CompiledRange [^String original ^BigInteger prefix-num ^int shift]
   Range
   (compile [this] this)
   (has-ip? [this ip]
-    (let [;;---TODO Make IP a protocol, with a to-bytes function, as well?
-          ip (if (instance? InetAddress ip) ip (InetAddress/getByName ip))
-          ip-num (BigInteger. (.getAddress ip))]
-      (= 0 (.shiftRight (.xor prefix-num ip-num) (- (if ipv6? 128 32) bits)))))
+    (= 0 (.shiftRight (.xor prefix-num (to-bytes ip)) shift)))
 
   clojure.lang.IFn
   (invoke [this ip]
@@ -31,7 +44,7 @@
 
   Object
   (toString [this] original)
-  (equals [this other] (and (= prefix-num (.prefix-num other)) (= bits (.bits other))))
+  (equals [this other] (and (= prefix-num (.prefix-num other)) (= shift (.shift other))))
   (hashCode [this] (.hashCode original)))
 
 (extend-type String
@@ -40,8 +53,9 @@
     (let [[prefix bits] (split (trim this) #"/")
           bits (int (Integer/parseInt bits))
           prefix-bytes (.getAddress (InetAddress/getByName prefix))
-          prefix-num (BigInteger. prefix-bytes)]
-      (CompiledRange. (trim this) prefix-num bits (< 4 (count prefix-bytes)))))
+          prefix-num (BigInteger. prefix-bytes)
+          ipv6? (< 4 (count prefix-bytes))]
+      (CompiledRange. (trim this) prefix-num (- (if ipv6? 128 32) bits))))
 
   (has-ip? [this ip]
     (has-ip? (compile this) ip)))
