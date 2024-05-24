@@ -37,7 +37,7 @@ predicate function.
 
 ## License
 
-Copyright © 2015-2023 Functional Bytes
+Copyright © 2015-2024 Functional Bytes
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
