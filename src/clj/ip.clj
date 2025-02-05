@@ -44,7 +44,8 @@
 
   Object
   (toString [this] original)
-  (equals [this other] (and (= prefix-num (.prefix-num other)) (= shift (.shift other))))
+  (equals [this other] (and (= prefix-num (.prefix-num ^CompiledRange other))
+                            (= shift (.shift ^CompiledRange other))))
   (hashCode [this] (.hashCode original)))
 
 (extend-type String
