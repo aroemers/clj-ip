@@ -8,7 +8,7 @@ part of a subnet.
 Add the following to your dependencies:
 
 ```clj
-[functionalbytes/clj-ip "0.9.0"]
+[functionalbytes/clj-ip "1.0.0"]
 ```
 
 Require the `clj.ip` namespace and simply use the `has-ip?` function
